@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: ./docker/php-fpm
+      dockerfile: Dockerfile
+    image: mcr-phpfpm
+    container_name: "${CONTAINER_NAME_APP}"
+    volumes:
+      - ./app/web/public:/var/www/mcr
+    depends_on:
+      - mysql
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    image: mcr-nginx
+    container_name: "${CONTAINER_NAME_NGINX}"
+    volumes:
+      - ./app/web/public:/var/www/mcr
+      - ./data/logs/nginx-access.log:/var/log/nginx/access.log
+      - ./data/logs/nginx-error.log:/var/log/nginx/error.log
+    ports:
+      - "8888:80"
+      - "8443:443"
+    depends_on:
+      - app
+
+  mysql:
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+    container_name: "${CONTAINER_NAME_MYSQL}"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+    ports:
+      - "33306:3306"
